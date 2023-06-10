@@ -23,13 +23,20 @@
 
 package net.whimxiqal.journey.integration.notquests;
 
+import java.util.List;
 import java.util.logging.Logger;
 import net.whimxiqal.journey.JourneyApi;
 import net.whimxiqal.journey.JourneyApiProvider;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import rocks.gravili.notquests.paper.NotQuests;
+import rocks.gravili.notquests.paper.shadow.cloud.arguments.CommandArgument;
+import rocks.gravili.notquests.paper.shadow.cloud.arguments.parser.ArgumentParseResult;
+import rocks.gravili.notquests.paper.structs.objectives.Objective;
+import rocks.gravili.notquests.paper.structs.objectives.ObjectiveHolder;
 
 public final class JourneyNotQuests extends JavaPlugin {
 
@@ -61,6 +68,56 @@ public final class JourneyNotQuests extends JavaPlugin {
     JourneyApi api = JourneyApiProvider.get();
     api.registerScope(getName(), "notquests", new NotQuestsScope());
     Bukkit.getPluginManager().registerEvents(new StartQuestListener(), this);
+
+    // edit command structure to include a "useJourney" argument for objectives
+    notQuests().getCommandManager()
+        .getPaperCommandManager()
+        .command(notQuests().getCommandManager()
+            .getAdminEditObjectivesBuilder()
+            .literal("useJourney")
+            .argument(CommandArgument.<CommandSender, Boolean>ofType(Boolean.class, "value")
+                .asOptionalWithDefault("true")
+                .withSuggestionsProvider((context, s) -> List.of("true", "false"))
+                .withParser((commandContext, inputQueue) -> {
+                  if (inputQueue.isEmpty()) {
+                    // no input counts as true
+                    return ArgumentParseResult.success(true);
+                  }
+                  String value = inputQueue.remove();
+                  if (value.equalsIgnoreCase("true")) {
+                    return ArgumentParseResult.success(true);
+                  } else if (value.equalsIgnoreCase("false")) {
+                    return ArgumentParseResult.success(false);
+                  } else {
+                    return ArgumentParseResult.failure(new IllegalArgumentException("Invalid expression: " + value + ". Expected 'true' or 'false'"));
+                  }
+                })
+                .build())
+            .handler(context -> {
+              NotQuests notQuests = notQuests();
+              ObjectiveHolder objectiveHolder = notQuests.getCommandManager().getObjectiveHolderFromContextAndLevel(context, 0);
+              Objective objective = notQuests.getCommandManager().getObjectiveFromContextAndLevel(context, 0);
+              String path = objectiveHolder.getInitialConfigPath() + ".objectives." + objective.getObjectiveID() + ".useJourney";
+              final boolean useJourney = context.get("value");
+              boolean existing = objective.getConfig().getBoolean(path, false);
+              if (useJourney == existing) {
+                context.getSender().sendMessage(ChatColor.RED + "Objective " + objective.getObjectiveID() + " already has useJourney set to " + existing);
+                return;
+              }
+              if (useJourney) {
+                objectiveHolder.getConfig().set(path, true);
+                boolean hasLocation = objectiveHolder.getConfig().isConfigurationSection(objectiveHolder.getInitialConfigPath() + ".objectives." + objective.getObjectiveID() + ".location");
+                if (hasLocation) {
+                  context.getSender().sendMessage(ChatColor.GREEN + "Journey will now help navigate players to this objective, " + ChatColor.YELLOW + " but only after you set a location for it");
+                } else {
+                  context.getSender().sendMessage(ChatColor.GREEN + "Journey will now help navigate players to this objective's location");
+                }
+              } else {
+                objectiveHolder.getConfig().set(path, null);
+                context.getSender().sendMessage(ChatColor.YELLOW + "Journey will not navigate players to this objective");
+              }
+              objectiveHolder.saveConfig();
+            }));
   }
 
 }

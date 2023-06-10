@@ -48,7 +48,7 @@ public class StartQuestListener implements Listener {
       return;  // there was no location associated with this objective
     }
 
-    if (!firstObjective.getConfig().getBoolean(firstObjective.getInitialConfigPath() + ".journey", false)) {
+    if (!firstObjective.getConfig().getBoolean(firstObjective.getInitialConfigPath() + ".useJourney", false)) {
       return;  // config doesn't specify to use journey
     }
 

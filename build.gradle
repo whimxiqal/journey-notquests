@@ -57,7 +57,6 @@ repositories {
 }
 
 dependencies {
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.8.1'
     compileOnly 'com.destroystokyo.paper:paper-api:1.15.2-R0.1-SNAPSHOT'
     compileOnly 'net.whimxiqal.journey:core-api:1.1-SNAPSHOT'
     compileOnly 'net.whimxiqal.journey:bukkit-api:1.1-SNAPSHOT'

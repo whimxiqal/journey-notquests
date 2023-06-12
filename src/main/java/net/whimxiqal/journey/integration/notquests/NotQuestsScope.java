@@ -93,6 +93,7 @@ public class NotQuestsScope implements Scope {
         questSubScopes.put(String.valueOf(objective.getObjectiveID()), objectiveScope.build());
       }
       questScope.subScopes(VirtualMap.of(questSubScopes));
+      questScope.strict();  // strict because the quest should always be mentioned to refer to any of its objectives and destinations
       subScopes.put(quest.getQuestIdentifier(), questScope.build());
     }
 

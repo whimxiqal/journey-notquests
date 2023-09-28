@@ -11,7 +11,7 @@ group = 'net.whimxiqal.journey'
 version = '1.2.0'
 
 
-def targetJavaVersion = 16
+def targetJavaVersion = 17
 def javaVersion = JavaVersion.toVersion(targetJavaVersion)
 sourceCompatibility = javaVersion
 targetCompatibility = javaVersion
